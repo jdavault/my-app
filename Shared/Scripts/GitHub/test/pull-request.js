@@ -21,7 +21,7 @@ describe('Pull Request', function () {
     });
 
     it('should match jira issues', function () {
-      const jiraItems = ['PI-1', 'PI-15', 'PI-8485468', 'DEVOPS-1', 'DEVOPS-588', 'DEVOPS-2343432', 'A-1'];
+      const jiraItems = ['ST-1', 'ST-','PI-1', 'PI-15', 'PI-8485468', 'DEVOPS-1', 'DEVOPS-588', 'DEVOPS-2343432', 'A-1'];
       jiraItems.forEach(item => {
         const pullRequestTitle = getPullRequestTitle({item});
         assert.isTrue(ticketRegexp.test(item), `'${item}' did not match ${ticketRegexp}`);
@@ -32,7 +32,7 @@ describe('Pull Request', function () {
     });
 
     it('should match jira & board items', function () {
-      const jiraItems = ['PI-1', 'AB#1', 'AB#18', 'PI-15', 'PI-8485468', 'AB#5484553', 'DEVOPS-1', 'DEVOPS-588', 'DEVOPS-2343432', 'A-1'];
+      const jiraItems = ['ST-1', 'ST-','PI-1', 'AB#1', 'AB#18', 'PI-15', 'PI-8485468', 'AB#5484553', 'DEVOPS-1', 'DEVOPS-588', 'DEVOPS-2343432', 'A-1'];
       const jiraMultiItempullRequestTitle = getPullRequestTitle({item: jiraItems});
       assert.isTrue(pullRequestTitleRegExp.test(jiraMultiItempullRequestTitle), `'${jiraMultiItempullRequestTitle}' did not match ${pullRequestTitleRegExp}`);
     });
