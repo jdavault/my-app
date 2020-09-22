@@ -1,0 +1,29 @@
+parameters:
+  angularProjectName: ''
+  installSharedServices: false
+  name: ''
+  projectName: ''
+  projectRoot: ''
+  variablesFileName: 'non-prod-vars.yml'
+
+jobs:
+  - ${{ each environment in parameters.environments }}:
+      - job: ${{replace(upper(environment), '-', '_')}}
+        displayName: ${{parameters.name}} ${{upper(environment)}}
+        variables:
+          - template: '../../../AzurePipelines/CI/${{parameters.variablesFileName}}'
+        steps:
+          - template: ../Tools/node-steps.yml
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: ${{parameters.projectName}}
+              targetPath: '$(Pipeline.Workspace)/${{parameters.projectName}}'
+          - script: unzip project.zip -d .
+            workingDirectory: '$(Pipeline.Workspace)/${{parameters.projectName}}'
+            displayName: 'unzip project'
+          - template: ./angular-steps.yml
+            parameters:
+              angularProjectName: ${{parameters.angularProjectName}}
+              artifactName: ${{parameters.projectName}}_${{replace(upper(environment), '-', '_')}}
+              environment: ${{environment}}
+              projectRoot: '$(Pipeline.Workspace)/${{parameters.projectName}}'

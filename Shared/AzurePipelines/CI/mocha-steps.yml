@@ -1,0 +1,16 @@
+parameters:
+  projectRoot: ''
+
+steps:
+  - script: |
+      yarn
+    workingDirectory:  ${{parameters.projectRoot}}
+    displayName: 'yarn install'
+  - script: |
+      npm test
+    workingDirectory:  ${{parameters.projectRoot}}
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testRunner: JUnit
+      testResultsFiles: '${{parameters.projectRoot}}/test-results.xml'

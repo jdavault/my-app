@@ -1,0 +1,29 @@
+parameters:
+  displayName: ''
+  env: ''
+  name: ''
+  solutionRoot: ''
+  terragruntRoot: ''
+  regionName: ''
+  variablesFileName: 'non-prod-vars.yml'
+
+jobs:
+  - job: ${{parameters.name}}
+    displayName: ${{parameters.displayName}}
+    variables:
+      - template: '../../../AzurePipelines/CI/${{parameters.variablesFileName}}'
+    steps:
+      - template: ../Tools/node-steps.yml
+      - template: ./artifact-serverless-steps.yml
+        parameters:
+          env: ${{parameters.env}}
+          solutionRoot: ${{parameters.solutionRoot}}
+          terragruntRoot: ${{parameters.terragruntRoot}}
+      - template: ./terragrunt-steps.yml
+        parameters:
+          artifactName: ${{parameters.name}}
+          awsCredentials: ${{variables.awsCredentials}}
+          productCode: ${{variables.productCode}}
+          regionName: ${{parameters.regionName}}
+          terragruntRoot: ${{parameters.terragruntRoot}}
+          terragruntDependencies: ${{variables.terragruntDependencies}}

@@ -1,0 +1,20 @@
+parameters:
+  name: ''
+  regionName: ''
+  solutionRoot: ''
+  stages: []
+  variablesFileName: 'non-prod-vars.yml'
+
+jobs:
+  - job: ${{parameters.name}}
+    variables:
+      - template: '../../../AzurePipelines/CI/${{parameters.variablesFileName}}'
+    steps:
+      - template: ./serverless-steps.yml
+        parameters:
+          artifactName: ${{parameters.solutionRoot}}
+          awsCredentials: ${{variables.awsCredentials}}
+          productCode: ${{variables.productCode}}
+          regionName: ${{parameters.regionName}}
+          solutionRoot: ${{parameters.solutionRoot}}
+          stages: ${{parameters.stages}}

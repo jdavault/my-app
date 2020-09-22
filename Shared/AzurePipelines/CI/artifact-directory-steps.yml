@@ -1,0 +1,52 @@
+parameters:
+  directoryName: ''
+  environment: ''
+  projectName: ''
+  stage: ''
+  terragruntRoot: ''
+
+steps:
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifactName: '${{parameters.projectName}}'
+      targetPath: '$(Pipeline.Workspace)/${{parameters.projectName}}'
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}}/${{parameters.stage}} \
+         ${{parameters.terragruntRoot}}/${{parameters.directoryName}}
+    displayName: 'Copy ${{parameters.stage}} stage artifact contents into terragrunt child directory ${{parameters.directoryName}}.'
+    condition: and(succeeded(), ne('${{parameters.stage}}', ''))
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}}/${{parameters.stage}} \
+         $(Build.ArtifactStagingDirectory)/${{parameters.directoryName}}
+    displayName: 'Copy ${{parameters.stage}} stage artifact contents into artifact staging directory.'
+    condition: and(succeeded(), ne('${{parameters.stage}}', ''))
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}}/${{parameters.environment}} \
+         ${{parameters.terragruntRoot}}/${{parameters.directoryName}}
+    displayName: 'Copy ${{parameters.environment}} environment artifact contents into terragrunt child directory ${{parameters.directoryName}}.'
+    condition: and(succeeded(), ne('${{parameters.environment}}', ''))
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}}/${{parameters.environment}} \
+         $(Build.ArtifactStagingDirectory)/${{parameters.directoryName}}
+    displayName: 'Copy ${{parameters.environment}} environment artifact contents into artifact staging directory.'
+    condition: and(succeeded(), ne('${{parameters.environment}}', ''))
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}} \
+         ${{parameters.terragruntRoot}}/${{parameters.directoryName}}
+    displayName: 'Copy artifact contents into terragrunt child directory ${{parameters.directoryName}}.'
+    condition: and(succeeded(), eq('${{parameters.stage}}', ''), eq('${{parameters.environment}}', ''))
+  - script: |
+      cp -r $(Pipeline.Workspace)/${{parameters.projectName}} \
+         $(Build.ArtifactStagingDirectory)/${{parameters.directoryName}}
+    displayName: 'Copy artifact contents into artifact staging directory.'
+    condition: and(succeeded(), eq('${{parameters.stage}}', ''), eq('${{parameters.environment}}', ''))
+  - script: |
+      ls -lah ${{parameters.terragruntRoot}}
+      echo "============================================================="
+      ls -lah ${{parameters.terragruntRoot}}/${{parameters.directoryName}}
+    displayName: 'Show terragrunt root contents.'
+  - script: |
+      ls -lah $(Build.ArtifactStagingDirectory)
+      echo "============================================================="
+      ls -lah $(Build.ArtifactStagingDirectory)/${{parameters.directoryName}}
+    displayName: 'Show artifact contents.'

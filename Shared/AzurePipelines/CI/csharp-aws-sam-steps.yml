@@ -1,0 +1,38 @@
+parameters:
+  awsCredentials: ''
+  productCode: ''
+  projectName: ''
+  projectRoot: ''
+  regionName: ''
+
+steps:
+  - script: dotnet restore
+    workingDirectory: ${{parameters.projectRoot}}
+    displayName: 'dotnet restore'
+
+  - task: Assembly-Info-NetFramework@2
+    displayName: 'Set Version'
+    inputs:
+      Path: ${{parameters.projectRoot}}
+      FileNames: '*.csproj'
+      InsertAttributes: true
+      Title: '$(Build.SourceBranchName)-$(Build.SourceVersion)'
+      Description: '$(Build.SourceBranchName)-$(Build.SourceVersion)-$(Build.BuildNumber)'
+      Company: 'OpenTech Alliance'
+      Copyright: 'Copyright ©  $(date:yyyy) OpenTech Alliance'
+      VersionNumber: '1.0.*.*'
+      FileVersionNumber: '1.0.*.*'
+      InformationalVersion: '1.0.*.*'
+    enabled: false
+
+  - task: LambdaNETCoreDeploy@1
+    displayName: 'restore, build, & package'
+    inputs:
+      awsCredentials: ${{parameters.awsCredentials}}
+      regionName: ${{parameters.regionName}}
+      command: deployServerless
+      packageOnly: true
+      packageOutputFile: '$(build.ArtifactStagingDirectory)/packaged.json'
+      lambdaProjectPath: ${{parameters.projectRoot}}
+      s3Bucket: '${{parameters.productCode}}-artifacts-${{parameters.regionName}}'
+      additionalArgs: '--msbuild-parameters "--no-restore"'

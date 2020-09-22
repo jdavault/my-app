@@ -1,0 +1,53 @@
+parameters:
+  environments: []
+  projectName: ''
+  awsCredentials: ''
+  productCode: ''
+  regionName: ''
+
+steps:
+  - ${{ each environment in parameters.environments }}:
+      - script: mkdir -p $(Build.ArtifactStagingDirectory)/${{environment}}
+        workingDirectory:  ${{parameters.projectName}}
+        displayName: 'Functionbeat create ${{environment}} artifact folder'
+
+      - script: cp pkg/cfn.template $(Build.ArtifactStagingDirectory)/${{environment}}/cloudformation-template-update-stack.json
+        workingDirectory:  ${{parameters.projectName}}
+        displayName: 'Functionbeat copy cfn.template ${{environment}} artifact folder'
+
+      - script: |
+          yarn
+        workingDirectory: Shared/Scripts/AzureDevOps
+        displayName: 'install node modules for scripts'
+
+      - script: |
+          node --experimental-modules ../Shared/Scripts/AzureDevOps/src/replace-s3-key.mjs \
+          --pathToFile="$(Build.ArtifactStagingDirectory)/${{environment}}/cloudformation-template-update-stack.json" \
+          --s3Key="${{parameters.projectName}}/$(Build.SourceVersion)/${{environment}}/functionbeat.zip" \
+          --s3Bucket="${{parameters.productCode}}-artifacts-${{parameters.regionName}}" \
+          --resource="fnbLambdaFunction"
+        workingDirectory: ${{parameters.projectName}}
+        displayName: 'Update s3 key in cfn template'
+
+      - script: chmod 777 functionbeat.yml functionbeat-aws
+        workingDirectory:  ${{parameters.projectName}}/pkg
+        displayName: 'Functionbeat create artifact zip'
+
+      - script: zip $(Build.ArtifactStagingDirectory)/${{environment}}/functionbeat.zip functionbeat.yml  functionbeat-aws
+        workingDirectory:  ${{parameters.projectName}}/pkg
+        displayName: 'Functionbeat create artifact zip'
+
+      - task: AWSShellScript@1
+        inputs:
+          awsCredentials: ${{parameters.awsCredentials}}
+          regionName: ${{parameters.regionName}}
+          scriptType: 'inline'
+          inlineScript: |
+            aws s3 cp ${{environment}}/functionbeat.zip s3://${{parameters.productCode}}-artifacts-${{parameters.regionName}}/${{parameters.projectName}}/$(Build.SourceVersion)/${{environment}}/functionbeat.zip
+          disableAutoCwd: true
+          workingDirectory: $(Build.ArtifactStagingDirectory)
+          failOnStandardError: false
+        displayName: 'Push Artifact to s3'
+
+      - publish: $(Build.ArtifactStagingDirectory)/${{environment}}
+        artifact: ${{parameters.projectName}}${{environment}}

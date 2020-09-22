@@ -1,0 +1,54 @@
+parameters:
+  projectName: ''
+  awsCredentials: ''
+  productCode: ''
+  projectRoot: ''
+  regionName: ''
+  stages: []
+
+steps:
+  - script: chmod 755 functionbeat
+    workingDirectory:  ${{parameters.projectRoot}}
+    displayName: 'Functionbeat allow permissions for execute'
+
+  - ${{ each stage in parameters.stages }}:
+      - script: mkdir -p $(Build.ArtifactStagingDirectory)/${{stage}}
+        workingDirectory:  ${{parameters.projectRoot}}
+        displayName: 'Functionbeat create ${{stage}} artifact folder'
+
+      - script: ./functionbeat -c ${{stage}}/functionbeat-${{stage}}.yml export function functionbeat-${{stage}} -e -v --strict.perms=false > $(Build.ArtifactStagingDirectory)/${{stage}}/cloudformation-template-update-stack.json
+        workingDirectory:  ${{parameters.projectRoot}}
+        displayName: 'Functionbeat export ${{stage}} cfn template'
+
+      - script: ./functionbeat -c ${{stage}}/functionbeat-${{stage}}.yml package functionbeat-${{stage}} -e -v --strict.perms=false --output $(Build.ArtifactStagingDirectory)/${{stage}}/functionbeat.zip
+        workingDirectory:  ${{parameters.projectRoot}}
+        displayName: 'Functionbeat package ${{stage}} lambda deployable'
+
+      - script: |
+          yarn
+        workingDirectory: Shared/Scripts/AzureDevOps
+        displayName: 'install node modules for scripts'
+
+      - script: |
+          node --experimental-modules ../Shared/Scripts/AzureDevOps/src/replace-s3-key.mjs \
+          --pathToFile="$(Build.ArtifactStagingDirectory)/${{stage}}/cloudformation-template-update-stack.json" \
+          --s3Key="${{parameters.projectRoot}}/$(Build.SourceVersion)/${{stage}}/functionbeat.zip" \
+          --s3Bucket="${{parameters.productCode}}-artifacts-${{parameters.regionName}}" \
+          --resource="fnbfunctionbeat${{stage}}"
+        workingDirectory: ${{parameters.projectRoot}}
+        displayName: 'Update s3 key in cfn template'
+
+      - task: AWSShellScript@1
+        inputs:
+          awsCredentials: ${{parameters.awsCredentials}}
+          regionName: ${{parameters.regionName}}
+          scriptType: 'inline'
+          inlineScript: |
+            aws s3 cp ${{stage}}/functionbeat.zip s3://${{parameters.productCode}}-artifacts-${{parameters.regionName}}/${{parameters.projectRoot}}/$(Build.SourceVersion)/${{stage}}/functionbeat.zip
+          disableAutoCwd: true
+          workingDirectory: $(Build.ArtifactStagingDirectory)
+          failOnStandardError: false
+        displayName: 'Push Artifact to s3'
+
+      - publish: $(Build.ArtifactStagingDirectory)/${{stage}}
+        artifact: ${{parameters.projectName}}${{stage}}

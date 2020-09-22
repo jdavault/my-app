@@ -1,0 +1,28 @@
+parameters:
+  buildConfiguration: Release
+  name: ''
+  projectName: ''
+  projectRoot: ''
+  regionName: ''
+  variablesFileName: 'non-prod-vars.yml'
+
+jobs:
+  - job: ${{parameters.name}}
+    variables:
+      - template: '../../../AzurePipelines/CI/${{parameters.variablesFileName}}'
+    pool:
+      vmImage: ${{variables.vmImage}}
+    container:
+      image: ${{variables.containerImage}}
+      endpoint: ${{variables.containerEndpoint}}
+    steps:
+      - template: ../Tools/dotnet-steps.yml
+      - template: ./csharp-nuget-steps.yml
+        parameters:
+          artifactName: ${{parameters.projectName}}
+          awsCredentials: ${{variables.awsCredentials}}
+          buildConfiguration: ${{parameters.buildConfiguration}}
+          productCode: ${{variables.productCode}}
+          projectName: ${{parameters.projectName}}
+          projectRoot: ${{parameters.projectRoot}}
+          regionName: ${{parameters.regionName}}

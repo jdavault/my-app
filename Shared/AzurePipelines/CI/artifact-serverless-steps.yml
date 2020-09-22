@@ -1,0 +1,15 @@
+parameters:
+  env: ''
+  solutionRoot: ''
+  terragruntRoot: ''
+
+steps:
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifactName: '${{parameters.projectName}}'
+      targetPath: '$(Pipeline.Workspace)/${{parameters.projectName}}'
+
+  - script: |
+      cp $(Pipeline.Workspace)/${{parameters.solutionRoot}}${{parameters.env}}/cloudformation-template-update-stack.json \
+         ${{parameters.terragruntRoot}}/cloudformation-template-update-stack.json
+    displayName: 'Copy cloudformation from build to use in the terragrunt plan.'

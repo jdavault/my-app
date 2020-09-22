@@ -1,0 +1,22 @@
+parameters:
+  angularProjectName: ''
+  artifactName: ''
+  environment: ''
+  installSharedServices: false
+  projectRoot: ''
+
+steps:
+  - script: |
+      npm run build:${{replace(parameters.environment, '-', '')}}
+    workingDirectory: ${{parameters.projectRoot}}
+    displayName: build:${{replace(parameters.environment, '-', '')}}
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: '${{parameters.projectRoot}}/dist'
+      Contents: '**'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    displayName: 'Copy contents to /${{parameters.environment}}'
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{parameters.artifactName}}

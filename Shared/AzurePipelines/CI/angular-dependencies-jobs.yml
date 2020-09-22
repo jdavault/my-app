@@ -1,0 +1,19 @@
+parameters:
+  angularProjectName: ''
+  name: ''
+  packageManager: 'yarn'
+  projectName: ''
+  projectRoot: ''
+  stages: []
+
+jobs:
+  - job: ${{parameters.name}}
+    variables:
+      - template: ../../../AzurePipelines/CI/non-prod-vars.yml
+    steps:
+      - template: ../Tools/node-steps.yml
+      - template: ./angular-dependencies-steps.yml
+        parameters:
+          artifactName: ${{parameters.projectName}}
+          packageManager: ${{parameters.packageManager}}
+          projectRoot: ${{parameters.projectRoot}}

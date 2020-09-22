@@ -1,0 +1,13 @@
+parameters:
+  projectName: ''
+  terragruntRoot: ''
+
+steps:
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifactName: '${{parameters.projectName}}'
+      targetPath: '$(Pipeline.Workspace)/${{parameters.projectName}}'
+  - script: |
+      cp $(Pipeline.Workspace)/${{parameters.projectName}}/* \
+         ${{parameters.terragruntRoot}}
+    displayName: 'Copy artifact files into Terragrunt directory.'

@@ -1,0 +1,9 @@
+steps:
+  - task: UseNode@1
+    inputs:
+      version: '12.x'
+      checkLatest: true
+
+  - task: YarnInstaller@3
+    inputs:
+      versionSpec: '1.x'

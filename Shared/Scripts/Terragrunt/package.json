@@ -1,0 +1,14 @@
+{
+  "name": "terragrunt",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "chalk": "^2.4.2",
+    "fs-extra": "^8.1.0",
+    "glob": "^7.1.5",
+    "rmfr": "^2.0.0",
+    "yargs": "^14.2.0"
+  }
+}

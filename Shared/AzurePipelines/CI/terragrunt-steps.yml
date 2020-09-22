@@ -1,0 +1,86 @@
+parameters:
+  artifactName: ''
+  awsCredentials: ''
+  htmlEscape: sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
+  planArguments: ''
+  productCode: ''
+  regionName: ''
+  terragruntCleanOutput: sed s/\\[terragrunt.*Error/$(printf "\033[31mError:\033[0m")\ Error/ | grep -v "\[terragrunt]" >&2
+  terragruntDependencies: ''
+  terragruntRoot: ''
+
+steps:
+  - task: S3Download@1
+    inputs:
+      awsCredentials: ${{parameters.awsCredentials}}
+      regionName: 'us-west-2'
+      bucketName: 'devops-terragrunt-resources' #public bucket, not account specific.
+      sourceFolder: 'latest'
+      globExpressions: '*'
+      flattenFolders: true
+      targetFolder: ${{parameters.terragruntDependencies}}
+    displayName: 'download terragrunt dependencies and plugins'
+
+  - script: chmod 755 *
+    workingDirectory:  ${{parameters.terragruntDependencies}}
+    displayName: 'chmod terragrunt dependencies'
+
+  - script: chmod 755 Shared/Scripts/Terragrunt/src/proxy-terraform.js
+    workingDirectory: $(Build.SourcesDirectory)
+    displayName: 'chmod proxy terraform script'
+
+  - script: |
+      yarn
+    workingDirectory:  '$(Build.SourcesDirectory)/Shared/Scripts/Terragrunt'
+    displayName: 'yarn install'
+
+  - task: AWSShellScript@1
+    inputs:
+      awsCredentials: ${{parameters.awsCredentials}}
+      regionName: ${{parameters.regionName}}
+      scriptType: 'inline'
+      inlineScript: '${{parameters.terragruntDependencies}}/terragrunt plan -lock=false -out=$(Agent.TempDirectory)/${{parameters.artifactName}}.tfplan ${{parameters.planArguments}}'
+      disableAutoCwd: true
+      workingDirectory: ${{parameters.terragruntRoot}}
+    env:
+      TERRAGRUNT_TFPATH: $(Build.SourcesDirectory)/Shared/Scripts/Terragrunt/src/proxy-terraform.js
+      TERRAGRUNT_DEPENDENCIES: ${{parameters.terragruntDependencies}}
+    displayName: 'terragrunt plan'
+    timeoutInMinutes: 10
+
+  - task: AWSShellScript@1
+    inputs:
+      awsCredentials: ${{parameters.awsCredentials}}
+      regionName: ${{parameters.regionName}}
+      scriptType: 'inline'
+      inlineScript: |
+        (
+        echo -n '<pre>';
+        ${{parameters.terragruntDependencies}}/terragrunt show $(Agent.TempDirectory)/${{parameters.artifactName}}.tfplan 2> >(${{parameters.terragruntCleanOutput}}) | ${{parameters.htmlEscape}} | npx ansi2html;
+        echo -n '</pre>';
+        ) > $(Agent.TempDirectory)/${{parameters.artifactName}}.html
+      disableAutoCwd: true
+      workingDirectory: ${{parameters.terragruntRoot}}
+    env:
+      TERRAGRUNT_TFPATH: ${{parameters.terragruntDependencies}}/terraform
+    displayName: 'Create HTML Terraform Plan'
+
+  - task: publishHtml@1
+    inputs:
+      artifactName: ${{parameters.artifactName}}
+      htmlFilePath: '$(Agent.TempDirectory)/${{parameters.artifactName}}.html'
+
+  - script: |
+      cp -r .terragrunt-cache/*/. $(Build.ArtifactStagingDirectory)
+    displayName: 'Copy terraform into artifact directory'
+    workingDirectory: ${{parameters.terragruntRoot}}
+
+  - script: |
+      $TERRAGRUNT_DEPENDENCIES/terraform -v | grep -oP '(?<=Terraform v)([0-9]+.[0-9]+.[0-9]+)' > terraform-version.txt
+    displayName: 'Save Terraform Version'
+    env:
+      TERRAGRUNT_DEPENDENCIES: ${{parameters.terragruntDependencies}}
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{parameters.artifactName}}

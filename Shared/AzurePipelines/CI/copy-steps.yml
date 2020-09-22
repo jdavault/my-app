@@ -1,0 +1,14 @@
+parameters:
+  artifactName: ''
+  directory: ''
+  stages: []
+
+steps:
+  - ${{ each stage in parameters.stages }}:
+      - script: |
+          cp -r $(Build.SourcesDirectory)/${{parameters.directory}} \
+             $(Build.ArtifactStagingDirectory)/${{stage}}
+        displayName: 'Copy files into ${{stage}} artifact.'
+
+  - publish: $(Build.ArtifactStagingDirectory)
+    artifact: ${{parameters.artifactName}}

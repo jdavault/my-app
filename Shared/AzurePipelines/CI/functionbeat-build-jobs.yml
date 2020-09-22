@@ -1,0 +1,28 @@
+parameters:
+  productCode: ''
+  projectName: ''
+  projectRoot: ''
+  regionName: ''
+  stages: []
+  variablesFileName: 'non-prod-vars.yml'
+
+jobs:
+  - job: ${{parameters.name}}
+    variables:
+      - template: '../../../AzurePipelines/CI/${{parameters.variablesFileName}}'
+    pool:
+      vmImage: ${{variables.vmImage}}
+    container:
+      image: ${{variables.containerImage}}
+      endpoint: ${{variables.containerEndpoint}}
+    steps:
+      - template: ../Tools/node-steps.yml
+      - template: ./functionbeat-build-steps.yml
+        parameters:
+          artifactName: ${{parameters.projectName}}
+          awsCredentials: ${{variables.awsCredentials}}
+          productCode: ${{variables.productCode}}
+          projectName: ${{parameters.projectName}}
+          projectRoot: ${{parameters.projectRoot}}
+          regionName: ${{parameters.regionName}}
+          stages: ${{parameters.stages}}
