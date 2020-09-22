@@ -1,0 +1,18 @@
+name: Pull Request rules
+on:
+  pull_request:
+    types: [ opened, edited, reopened, synchronize ]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - run: yarn
+        working-directory: ./Shared/GitHub/action-pull-request-title
+      - uses: ./Shared/GitHub/action-pull-request-title
+      - run: yarn
+        working-directory: ./Shared/GitHub/action-pull-request-branch
+      - uses: ./Shared/GitHub/action-pull-request-branch

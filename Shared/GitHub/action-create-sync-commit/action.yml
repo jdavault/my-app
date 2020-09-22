@@ -1,0 +1,12 @@
+name: 'Create Sync Commit'
+description: 'Github action to create a merge commit between branches'
+runs:
+  using: 'node12'
+  main: 'src/index.js'
+branding:
+  icon: 'cloud'
+  color: 'blue'
+inputs:
+  token:
+    description: 'Github token with access to the repository (secrets.GITHUB_TOKEN).'
+    required: true

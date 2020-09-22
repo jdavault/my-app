@@ -1,0 +1,8 @@
+name: 'Pull Request branch rules'
+description: 'Github action to enforce gitflow branch merging'
+runs:
+  using: 'node12'
+  main: 'src/index.js'
+branding:
+  icon: 'cloud'
+  color: 'blue'

@@ -1,0 +1,15 @@
+name: 'Create Sync Branch'
+description: 'Github action to sync data between branches'
+runs:
+  using: 'node12'
+  main: 'src/index.js'
+branding:
+  icon: 'cloud'
+  color: 'blue'
+inputs:
+  token:
+    description: 'Github token with access to the repository (secrets.GITHUB_TOKEN).'
+    required: true
+  branch:
+    description: 'The name of the target branch that current branch will be merged into.'
+    required: true

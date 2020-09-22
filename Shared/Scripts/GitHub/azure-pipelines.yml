@@ -1,0 +1,33 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - '*'
+  paths:
+    include:
+      - Shared/Scripts/GitHub/*
+      - Shared/AzurePipelines/CI/mocha-steps.yml
+      - AzurePipelines/CI/non-prod-vars.yml
+      - AzurePipelines/CI/prod-vars.yml
+      - Shared/AzurePipelines/Tools/node-steps.yml
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - master
+      - develop
+  paths:
+    include:
+      - Shared/Scripts/GitHub/*
+      - Shared/AzurePipelines/CI/mocha-steps.yml
+      - AzurePipelines/CI/non-prod-vars.yml
+      - AzurePipelines/CI/prod-vars.yml
+      - Shared/AzurePipelines/Tools/node-steps.yml
+stages:
+  - stage: TEST
+    displayName: Mocha Tests
+    jobs:
+      - template: ../../AzurePipelines/CI/mocha-jobs.yml
+        parameters:
+          name: GITHUB_SCRIPTS
+          projectRoot: Shared/Scripts/GitHub/

@@ -1,0 +1,8 @@
+name: 'Branch name rules'
+description: 'Github action to enforce regex'
+runs:
+  using: 'node12'
+  main: 'src/index.js'
+branding:
+  icon: 'cloud'
+  color: 'blue'
