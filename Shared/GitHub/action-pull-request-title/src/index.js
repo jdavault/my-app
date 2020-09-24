@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const {pullRequestTitleRegExp} = require('../../../Scripts/GitHub/src/lib/pull-request.js');
+const {pullRequestTitleRegExp: regex} = require('../../../Scripts/GitHub/src/lib/pull-request.js');
 
 const validEvents = ['pull_request'];
 
@@ -15,8 +15,8 @@ const validEvents = ['pull_request'];
     }
 
     core.info(`Pull Request title: "${title}"`);
-    core.info(`Regex: ${pullRequestTitleRegExp}`);
-    if (!pullRequestTitleRegExp.test(title)) {
+    core.info(`Regex: ${regex}`);
+    if (!regex.test(title)) {
       core.setFailed(`Invalid Pull Request title.\nExpected "{ticket+} {description}"\nGot: "${title}"`);
     }
   } catch (error) {

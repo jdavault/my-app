@@ -1,4 +1,4 @@
-const ticketRegexp = /(AB#\d+|[A-Z]+-\d+)/;
+const ticketRegexp = /(st-\d+|[A-Z]+-\d+)/;
 
 module.exports = {
   ticketRegexp

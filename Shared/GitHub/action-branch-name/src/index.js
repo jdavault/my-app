@@ -1,8 +1,9 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
-const {branchNameRegExp, protectedBranchTypes, syncBranchRegExp} = require('../../../Scripts/GitHub/src/lib/branch.js');
+const {branchNameRegExp: regex} = require('../../../Scripts/GitHub/src/lib/branch.js');
 
 const validEvents = ['push', 'pull_request'];
+const ignoreBranches = ['main', 'develop'];
 
 (async function () {
   try {
@@ -17,16 +18,14 @@ const validEvents = ['push', 'pull_request'];
     const branch = eventName === 'push' ? ref.replace('refs/heads/', '') : pull_request.head.ref;
     core.info(`Branch name: ${branch}`);
 
-    if (protectedBranchTypes.includes(branch)) {
-      core.info(`Skipping checks since ${branch} is in the protected branch list - ${protectedBranchTypes}`);
+    if (ignoreBranches.includes(branch)) {
+      core.info(`Skipping checks since ${branch} is in the ignored list - ${ignoreBranches}`);
       return;
     }
 
-    core.info(`Gitflow branch Regex: ${branchNameRegExp}`);
-    core.info(`Sync branch Regex: ${syncBranchRegExp}`);
-    if (!branchNameRegExp.test(branch) && !syncBranchRegExp.test(branch)) {
-      const expected = branch.startsWith('') ? "syc/{source}→${target}/{sourceHash}" : "{branchType}/{ticket/+}{description}";
-      core.setFailed(`Invalid Branch name.\nExpected ${expected}\nGot ${branch}`);
+    core.info(`Regex: ${regex}`);
+    if (!regex.test(branch)) {
+      core.setFailed(`Invalid Branch name.\nExpected "{branchType}/{ticket+/}{description}\nGot ${branch}`);
     }
   } catch (error) {
     core.setFailed(error.message);
